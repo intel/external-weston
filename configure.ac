@@ -217,6 +217,16 @@ if test x$enable_drm_compositor = xyes; then
 		    [AC_MSG_WARN([gbm does not support dmabuf import, will omit that capability])])
 fi
 
+AC_ARG_ENABLE(iahwc-compositor, [  --enable-iahwc-compositor],,
+enable_iahwc_compositor=yes)
+AM_CONDITIONAL(ENABLE_IAHWC_COMPOSITOR, test x$enable_iahwc_compositor = xyes)
+if test x$enable_iahwc_compositor = xyes; then
+AC_DEFINE([BUILD_IAHWC_COMPOSITOR], [1], [Build the IAHWC compositor])
+PKG_CHECK_MODULES(IAHWC_COMPOSITOR, [iahwc libudev >= 136 libdrm >= 2.4.30 gbm])
+PKG_CHECK_MODULES(IAHWC_COMPOSITOR_GBM, [gbm >= 10.2],
+[AC_DEFINE([HAVE_GBM_FD_IMPORT], 1, [gbm supports dmabuf import])],
+[AC_MSG_WARN([gbm does not support dmabuf import, will omit that capability])])
+fi
 
 PKG_CHECK_MODULES(LIBINPUT_BACKEND, [libinput >= 0.8.0])
 PKG_CHECK_MODULES(COMPOSITOR, [$COMPOSITOR_MODULES])
@@ -717,6 +727,7 @@ AC_MSG_RESULT([
 	systemd notify support		${enable_systemd_notify}
 
 	DRM Compositor			${enable_drm_compositor}
+	IAHWC Compositor		${enable_iahwc_compositor}
 	X11 Compositor			${enable_x11_compositor}
 	Wayland Compositor		${enable_wayland_compositor}
 	Headless Compositor		${enable_headless_compositor}
