@@ -2326,10 +2326,9 @@ load_wayland_backend(struct weston_compositor *c,
 	return 0;
 }
 
-static void
-iahwc_backend_output_configure(struct wl_listener *listener, void *data)
+static int
+iahwc_backend_output_configure(struct weston_output *output)
 {
-	struct weston_output *output = data;
 	struct weston_config *wc = wet_get_config(output->compositor);
 	struct weston_config_section *section;
 	const struct weston_iahwc_output_api *api = weston_iahwc_output_get_api(output->compositor);
@@ -2339,7 +2338,7 @@ iahwc_backend_output_configure(struct wl_listener *listener, void *data)
 
 	if (!api) {
 		weston_log("Cannot use weston_drm_output_api.\n");
-		return;
+		return -1;
 	}
 
 	section = weston_config_get_section(wc, "output", "name", output->name);
@@ -2347,7 +2346,7 @@ iahwc_backend_output_configure(struct wl_listener *listener, void *data)
 
 	if (api->set_mode(output, WESTON_DRM_BACKEND_OUTPUT_CURRENT, NULL) < 0) {
 		weston_log("Cannot configure an output using weston_drm_output_api.\n");
-		return;
+		return -1;
 	}
 
 	wet_output_set_scale(output, section, 1, 0);
@@ -2364,7 +2363,7 @@ iahwc_backend_output_configure(struct wl_listener *listener, void *data)
 	api->set_seat(output, seat);
 	free(seat);
 
-	weston_output_enable(output);
+	return 0;
 }
 
 static int
@@ -2401,7 +2400,7 @@ load_iahwc_backend(struct weston_compositor *c,
 	ret = weston_compositor_load_backend(c, WESTON_BACKEND_IAHWC,
 					     &config.base);
 
-	wet_set_pending_output_handler(c, iahwc_backend_output_configure);
+	wet_set_simple_head_configurator(c, iahwc_backend_output_configure);
 
 	free(config.gbm_format);
 	free(config.seat_id);
